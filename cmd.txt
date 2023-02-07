@@ -1,2 +1,2 @@
 train: ./darknet detector train ModelZoo/IR/IR.data ModelZoo/IR/yolo-fastest-1.1_IR_small.cfg
-test: ./darknet detector test ./ModelZoo/IR/IR.data ./ModelZoo/IR/yolo-fastest-1.1_IR_small.cfg ./model/yolo-fastest-1_final.weights from_top2.jpg -i 0 -thresh 0.25 
+test: ./darknet detector test ./ModelZoo/IR/IR.data ./ModelZoo/IR/yolo-fastest-1.1_IR_small.cfg ./ModelZoo/IR/yolo-fastest-1.1_IR_40x40_LeiData_smallroom_30dc.weights  test_pic/from_top2.jpg -i 0 -thresh 0.25
