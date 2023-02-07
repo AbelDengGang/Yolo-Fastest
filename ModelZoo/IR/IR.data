@@ -1,6 +1,6 @@
 classes= 1
 train  = /home/gang/IR/Yolo-Fastest/ModelZoo/IR/train.txt
 valid  = /home/gang/IR/Yolo-Fastest/ModelZoo/IR/val.txt
-names = /home/gang/IR/Yolo-Fastest/ModelZoo/IR/IR.names
+names = ./ModelZoo/IR/IR.names
 backup = model
 
