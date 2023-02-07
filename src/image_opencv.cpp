@@ -454,6 +454,13 @@ extern "C" void show_image_cv(image p, const char *name)
         else if (mat.channels() == 4) cv::cvtColor(mat, mat, cv::COLOR_RGBA2BGR);
         cv::namedWindow(name, cv::WINDOW_NORMAL);
         cv::imshow(name, mat);
+        if (p.w < 100){
+            cv::resizeWindow(name,(int)320*(p.h/p.w),320);
+        }else if (p.w >1000){
+            cv::resizeWindow(name,(int)1000*(p.h/p.w),1000);
+        }else{
+            cv::resizeWindow(name,p.h, p.w);
+        }
         free_image(copy);
     }
     catch (...) {
