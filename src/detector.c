@@ -1639,6 +1639,12 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
     FILE* json_file = NULL;
 	char * filename;
 
+	int compared_images = 0;
+	int good_images = 0;
+	int missed_images = 0;
+	int wrong_images = 0;
+
+
 	// 打开并检查列表文件
 	FILE *file_list_file = fopen(list_filename, "r");
 	if(file_list_file == 0) file_error(list_filename);
@@ -1702,41 +1708,56 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
             else diounms_sort(dets, nboxes, l.classes, nms, l.nms_kind, l.beta_nms);
         }
         // image too small, don't draw alphabet
-        draw_detections_v3(im, dets, nboxes, thresh, names, im.w < 100 ? NULL: alphabet, l.classes, ext_output);
+        int selected_detections_num = draw_detections_v3(im, dets, nboxes, thresh, names, im.w < 100 ? NULL: alphabet, l.classes, ext_output);
 
-		// compare with label file
-        char labelpath[4096];
-        replace_image_to_label(filename, labelpath);
-		// load ground true
-        int num_labels = 0;
-        box_label *truth = read_boxes(labelpath, &num_labels);
-
-        for (j = 0; j < num_labels; ++j) {
-            box t = { truth[j].x, truth[j].y, truth[j].w, truth[j].h };
-			{
-				int left = (t.x - t.w / 2.)*im.w;
-				int right = (t.x + t.w / 2.)*im.w;
-				int top = (t.y - t.h / 2.)*im.h;
-				int bot = (t.y + t.h / 2.)*im.h;
-
-				if (left < 0) left = 0;
-				if (right > im.w - 1) right = im.w - 1;
-				if (top < 0) top = 0;
-				if (bot > im.h - 1) bot = im.h - 1;
-
-				if (im.c == 1) {
-					draw_box_width_bw(im, left, top, right, bot, 1, 0.4);    // 1 channel Black-White
-				}
-				else {
-					draw_box_width(im, left, top, right, bot, 1, 0, 64, 0); // 3 channels RGB
-				}
-			}
-        }
 		char predictions_file_name[4096];
 		char predictions_file_path[4096];
 		gen_result_file_name(filename,predictions_file_name);
 		sprintf(predictions_file_path,"%s\/%s",result_dir,predictions_file_name);
 		printf("save predictions result:%s\n",predictions_file_path);
+
+		// compare with label file
+        char labelpath[4096];
+        replace_image_to_label(filename, labelpath);
+		// load ground truth
+        int num_labels = 0;
+        box_label *truth = read_boxes(labelpath, &num_labels);
+		if (truth) {
+			// draw ground truth
+			for (j = 0; j < num_labels; ++j) {
+				box t = { truth[j].x, truth[j].y, truth[j].w, truth[j].h };
+				{
+					int left = (t.x - t.w / 2.)*im.w;
+					int right = (t.x + t.w / 2.)*im.w;
+					int top = (t.y - t.h / 2.)*im.h;
+					int bot = (t.y + t.h / 2.)*im.h;
+
+					if (left < 0) left = 0;
+					if (right > im.w - 1) right = im.w - 1;
+					if (top < 0) top = 0;
+					if (bot > im.h - 1) bot = im.h - 1;
+
+					if (im.c == 1) {
+						draw_box_width_bw(im, left, top, right, bot, 1, 0.4);    // 1 channel Black-White
+					}
+					else {
+						draw_box_width(im, left, top, right, bot, 1, 0, 64, 0); // 3 channels RGB
+					}
+				}
+			}
+			compared_images ++;
+			//printf("selected_detections_num:%d,num_labels%d\n",selected_detections_num,num_labels);
+			if (num_labels > selected_detections_num) {
+				// missing
+				missed_images ++;
+				fprintf(stderr,"\nhas missed get %d, expect:%d:%s\n",selected_detections_num,num_labels,predictions_file_path);
+			}else if(num_labels < selected_detections_num){
+				wrong_images ++;
+				fprintf(stderr,"\nhas wrong get %d, expect:%d::%s\n",selected_detections_num,num_labels,predictions_file_path);
+			}else{
+				good_images ++;
+			}
+		}
         save_image(im, predictions_file_path);
         if (!dont_show) {
             show_image(im, "predictions");
@@ -1787,7 +1808,7 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
         if (!dont_show) {
             wait_key_cv(show_delay);
             //wait_until_press_key_cv();
-            destroy_all_windows_cv();
+            //destroy_all_windows_cv();
         }
 
     }
@@ -1815,8 +1836,14 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
         free(alphabet[j]);
     }
     free(alphabet);
+	if (!dont_show) {
+		//wait_until_press_key_cv();
+		destroy_all_windows_cv();
+	}
+
 
     free_network(net);
+	printf("Total accuracy: %f%(%d/%d)\n",100.*((float)good_images/compared_images),good_images,compared_images);
 }
 
 
