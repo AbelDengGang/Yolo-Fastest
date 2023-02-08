@@ -2,3 +2,5 @@ train: ./darknet detector train ModelZoo/IR/IR.data ModelZoo/IR/yolo-fastest-1.1
 test: ./darknet detector test ./ModelZoo/IR/IR.data ./ModelZoo/IR/yolo-fastest-1.1_IR_small.cfg ./ModelZoo/IR/yolo-fastest-1.1_IR_40x40_LeiData_smallroom_30dc.weights  test_pic/from_top2.jpg -i 0 -thresh 0.25
 test: 500ms后自动关闭 ./darknet detector test ./ModelZoo/IR/IR.data ./ModelZoo/IR/yolo-fastest-1.1_IR_small.cfg ./ModelZoo/IR/yolo-fastest-1.1_IR_40x40_LeiData_smallroom_30dc.weights  test_pic/from_top2.jpg -i 0 -thresh 0.25 -show_delay 500
 test: 测试列表中的文件  ./test_pics.sh ModelZoo/IR/val.txt
+
+test: 批测试图片，并保存到 results目录 ./darknet detector test_batch ./ModelZoo/IR/IR.data ./ModelZoo/IR/yolo-fastest-1.1_IR_small.cfg ModelZoo/IR/yolo-fastest-1.1_IR_40x40_LeiData_smallroom_30dc_top.weights  ModelZoo/IR/val.txt  -i 0 -thresh 0.25 -show_delay 500 -result_dir results

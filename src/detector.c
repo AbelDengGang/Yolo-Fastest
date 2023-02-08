@@ -23,6 +23,12 @@ int check_mistakes = 0;
 
 static int coco_ids[] = { 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90 };
 
+char * gen_result_file_name(const char * file_path,char * result_file_name){
+	find_replace_all(file_path,"\/","_dir_",result_file_name);
+	return result_file_name;
+
+}
+
 void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear, int dont_show, int calc_map, int mjpeg_port, int show_imgs, int benchmark_layers, char* chart_path)
 {
     list *options = read_data_cfg(datacfg);
@@ -1726,8 +1732,12 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
 				}
 			}
         }
-
-        save_image(im, "predictions");
+		char predictions_file_name[4096];
+		char predictions_file_path[4096];
+		gen_result_file_name(filename,predictions_file_name);
+		sprintf(predictions_file_path,"%s\/%s",result_dir,predictions_file_name);
+		printf("save predictions result:%s\n",predictions_file_path);
+        save_image(im, predictions_file_path);
         if (!dont_show) {
             show_image(im, "predictions");
         }
@@ -2153,11 +2163,7 @@ void draw_object(char *datacfg, char *cfgfile, char *weightfile, char *filename,
 }
 #endif // defined(OPENCV) && defined(GPU)
 
-char * gen_result_file_name(const char * file_path,char * result_file_name){
-	find_replace_all(file_path,"//","_dir_",result_file_name);
-	return result_file_name;
 
-}
 void run_detector(int argc, char **argv)
 {
     int dont_show = find_arg(argc, argv, "-dont_show");
@@ -2178,7 +2184,7 @@ void run_detector(int argc, char **argv)
     int json_port = find_int_arg(argc, argv, "-json_port", -1);
     char *http_post_host = find_char_arg(argc, argv, "-http_post_host", 0);
     // 输出文件名为输入文件路径中的/替换为_dir_后放入result_dir
-    char *result_dir = find_char_arg(argc, argv, "-result_dir", ".");
+    char *result_dir = find_char_arg(argc, argv, "-result_dir", "results");
     int time_limit_sec = find_int_arg(argc, argv, "-time_limit_sec", 0);
     char *out_filename = find_char_arg(argc, argv, "-out_filename", 0);
     char *outfile = find_char_arg(argc, argv, "-out", 0);
