@@ -1697,6 +1697,36 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
         }
         // image too small, don't draw alphabet
         draw_detections_v3(im, dets, nboxes, thresh, names, im.w < 100 ? NULL: alphabet, l.classes, ext_output);
+
+		// compare with label file
+        char labelpath[4096];
+        replace_image_to_label(filename, labelpath);
+		// load ground true
+        int num_labels = 0;
+        box_label *truth = read_boxes(labelpath, &num_labels);
+
+        for (j = 0; j < num_labels; ++j) {
+            box t = { truth[j].x, truth[j].y, truth[j].w, truth[j].h };
+			{
+				int left = (t.x - t.w / 2.)*im.w;
+				int right = (t.x + t.w / 2.)*im.w;
+				int top = (t.y - t.h / 2.)*im.h;
+				int bot = (t.y + t.h / 2.)*im.h;
+
+				if (left < 0) left = 0;
+				if (right > im.w - 1) right = im.w - 1;
+				if (top < 0) top = 0;
+				if (bot > im.h - 1) bot = im.h - 1;
+
+				if (im.c == 1) {
+					draw_box_width_bw(im, left, top, right, bot, 1, 0.4);    // 1 channel Black-White
+				}
+				else {
+					draw_box_width(im, left, top, right, bot, 1, 0, 64, 0); // 3 channels RGB
+				}
+			}
+        }
+
         save_image(im, "predictions");
         if (!dont_show) {
             show_image(im, "predictions");
