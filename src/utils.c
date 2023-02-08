@@ -203,6 +203,25 @@ void pm(int M, int N, float *A)
     printf("\n");
 }
 
+void find_replace_all(const char* str, char* orig, char* rep, char* output){
+	char* buffer = (char*)calloc(8192, sizeof(char));
+	char* merge_buffer = (char*)calloc(8192, sizeof(char));
+	char *p;
+
+	sprintf(buffer, "%s", str); // copy 
+	while (p = strstr(buffer, orig)) {
+		// 在 p点把原来的字符串分成两个字符串
+		*p = '\0'; 
+		// 在 p点替换字符
+		sprintf(merge_buffer, "%s%s%s", buffer, rep, p + strlen(orig));
+		strcpy(buffer,merge_buffer);
+	}
+	strcpy(output,buffer);
+
+	free(buffer);
+	free(merge_buffer);
+}
+
 void find_replace(const char* str, char* orig, char* rep, char* output)
 {
     char* buffer = (char*)calloc(8192, sizeof(char));
@@ -260,6 +279,8 @@ void find_replace_extension(char *str, char *orig, char *rep, char *output)
 
 void replace_image_to_label(const char* input_path, char* output_path)
 {
+	// 自定义数据集的标签文件都和图片文件在相同路径下
+	// 为特定数据集做的替换。COCO数据集的标签文件和图片不是一个路径
     find_replace(input_path, "/images/train2017/", "/labels/train2017/", output_path);    // COCO
     find_replace(output_path, "/images/val2017/", "/labels/val2017/", output_path);        // COCO
     find_replace(output_path, "/JPEGImages/", "/labels/", output_path);    // PascalVOC
