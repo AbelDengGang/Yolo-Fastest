@@ -1,0 +1,4 @@
+cfg名称，                            模型大小，   模型文件，                                                        th，精确度
+yolo-fastest-1.1_IR_small.cfg,       1159012,    yolo-fastest-1.1_IR_40x40_LeiData_smallroom_30dc_top.weights,    0.25, 94.915253%
+yolo-fastest-1.1_IR_small_v2.cfg,    1146084,    yolo-fastest-1.1_IR_small_v2_LeiData.weights,                    0.25, 94.067794%
+
