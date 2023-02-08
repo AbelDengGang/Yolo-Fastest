@@ -1633,6 +1633,8 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
     }
     srand(2222222);
     char buff[256];
+	sprintf(buff,"%s\/accuracy.txt",result_dir);
+	FILE *accuracy_result = fopen(buff,"w"); // now you can use buff as your will
     char *input = buff;
     char *json_buf = NULL;
     int json_image_id = 0;
@@ -1643,7 +1645,6 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
 	int good_images = 0;
 	int missed_images = 0;
 	int wrong_images = 0;
-
 
 	// 打开并检查列表文件
 	FILE *file_list_file = fopen(list_filename, "r");
@@ -1751,9 +1752,11 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
 				// missing
 				missed_images ++;
 				fprintf(stderr,"\nhas missed get %d, expect:%d:%s\n",selected_detections_num,num_labels,predictions_file_path);
+				fprintf(accuracy_result,"\nhas missed get %d, expect:%d:%s\n",selected_detections_num,num_labels,predictions_file_path);
 			}else if(num_labels < selected_detections_num){
 				wrong_images ++;
 				fprintf(stderr,"\nhas wrong get %d, expect:%d::%s\n",selected_detections_num,num_labels,predictions_file_path);
+				fprintf(accuracy_result,"\nhas wrong get %d, expect:%d::%s\n",selected_detections_num,num_labels,predictions_file_path);
 			}else{
 				good_images ++;
 			}
@@ -1841,7 +1844,7 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
 		destroy_all_windows_cv();
 	}
 
-
+	fclose(accuracy_result);
     free_network(net);
 	printf("Total accuracy: %f%(%d/%d)\n",100.*((float)good_images/compared_images),good_images,compared_images);
 }
