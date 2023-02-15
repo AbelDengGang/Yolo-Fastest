@@ -323,6 +323,16 @@ extern "C" cv::Mat image_to_mat(image img)
     }
     return mat;
 }
+
+extern "C" mat_cv * image_to_mat_ptr(image img)
+{
+    cv::Mat *mat_ptr = NULL;
+	cv::Mat dst = image_to_mat(img);
+	mat_ptr = new cv::Mat(dst);
+	return (mat_cv *)mat_ptr;
+}
+
+
 // ----------------------------------------
 
 extern "C" image mat_to_image(cv::Mat mat)

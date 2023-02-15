@@ -6,6 +6,7 @@
 #include "blas.h"
 #include "dark_cuda.h"
 #include <stdio.h>
+#include <errno.h>
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
 #endif
@@ -1533,22 +1534,79 @@ image load_image_stb_resize(char *filename, int w, int h, int c)
     return out;
 }
 
+int is_raw_file(char *filename){
+	char *p;
+	if ((p=strstr(filename,".raw"))) {
+		return 1;
+	}
+	return 0;
+
+}
+
 image load_image(char *filename, int w, int h, int c)
 {
-#ifdef OPENCV
-    //image out = load_image_stb(filename, c);
-    image out = load_image_cv(filename, c);
-#else
-    image out = load_image_stb(filename, c);    // without OpenCV
-#endif  // OPENCV
+	printf("filename:%s\n",filename);
+	if (is_raw_file(filename)) {
+		printf("%s is a rawfile!",filename);
+		if (c != 1) {
+			fprintf(stderr,"raw data only support 1 channel, but you input %d!\n",c);
+			return make_image(10, 10, c); 
+		}
+		return load_raw(filename);
 
-    if((h && w) && (h != out.h || w != out.w)){
-        image resized = resize_image(out, w, h);
-        free_image(out);
-        out = resized;
-    }
-    return out;
+	}else{
+	#ifdef OPENCV
+		//image out = load_image_stb(filename, c);
+		image out = load_image_cv(filename, c);
+	#else
+		image out = load_image_stb(filename, c);    // without OpenCV
+	#endif  // OPENCV
+
+		if((h && w) && (h != out.h || w != out.w)){
+			image resized = resize_image(out, w, h);
+			free_image(out);
+			out = resized;
+		}
+		return out;
+	}
 }
+
+image raw_to_image(uint8_t * buffer,int w, int h, int c){
+	image out = make_image(w,h,c);
+	int index = 0;
+	for (int line = 0;line < h ; ++line) {
+		for (int col = 0; col < w; ++ col) {
+			
+			out.data[index] = buffer[index] / 255.0f;
+			index ++;
+		}
+	}
+	return out;
+}
+
+image load_raw(char *filename){
+	#define RAW_W (32)
+	#define RAW_H (32)
+	#define RAW_CHANNEL (1)
+	#define READ_CNT (RAW_W * RAW_H * RAW_CHANNEL)
+	uint8_t buffer[RAW_W*RAW_H*RAW_CHANNEL];
+	FILE *file = fopen(filename, "rb");
+	if (!file) {
+		fprintf(stderr,"Can not open %s.Reason:%s\n",filename,strerror(errno));
+		return make_image(10, 10, 1);
+	}
+
+	size_t size = READ_CNT;
+	size = fread(buffer,1,READ_CNT,file);
+	if (size != READ_CNT) {
+		fprintf(stderr,"Can not read %d bytes from %s,only %ld bytes read.Reason:%s\n",READ_CNT,filename,size,strerror(errno));
+		return make_image(10, 10, 1);
+	}
+
+	fclose(file);
+	return raw_to_image(buffer,RAW_W,RAW_H,RAW_CHANNEL);
+}
+
 
 image load_image_color(char *filename, int w, int h)
 {

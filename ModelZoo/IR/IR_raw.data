@@ -1,0 +1,6 @@
+classes= 1
+train  = ./ModelZoo/IR/train_raws.txt
+valid  = ./ModelZoo/IR/val_raws.txt
+names = ./ModelZoo/IR/IR.names
+backup = model
+

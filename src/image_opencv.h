@@ -43,6 +43,7 @@ void release_mat(mat_cv **mat);
 // IplImage *mat_to_ipl(cv::Mat mat)
 // Mat image_to_mat(image img)
 // image mat_to_image(cv::Mat mat)
+mat_cv * image_to_mat_ptr(image img);
 image mat_to_image_cv(mat_cv *mat);
 
 // Window
