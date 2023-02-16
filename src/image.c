@@ -629,6 +629,21 @@ void constrain_image(image im)
     }
 }
 
+void normalize_image_constrain(image im,float fmin, float fmax)
+{
+    int i;
+    for(i = 0; i < im.h*im.w*im.c; ++i){
+        if(im.data[i] < fmin) im.data[i] = fmin;
+        if(im.data[i] > fmax) im.data[i] = fmax;
+    }
+
+    for(i = 0; i < im.c*im.w*im.h; ++i){
+        im.data[i] = (im.data[i] - fmin)/(fmax-fmin);
+    }
+
+}
+
+
 void normalize_image(image p)
 {
     int i;
@@ -1534,7 +1549,7 @@ image load_image_stb_resize(char *filename, int w, int h, int c)
     return out;
 }
 
-int is_raw_file(char *filename){
+int is_raw_file(const char *filename){
 	char *p;
 	if ((p=strstr(filename,".raw"))) {
 		return 1;
@@ -1545,9 +1560,7 @@ int is_raw_file(char *filename){
 
 image load_image(char *filename, int w, int h, int c)
 {
-	printf("filename:%s\n",filename);
 	if (is_raw_file(filename)) {
-		printf("%s is a rawfile!",filename);
 		if (c != 1) {
 			fprintf(stderr,"raw data only support 1 channel, but you input %d!\n",c);
 			return make_image(10, 10, c); 
@@ -1571,16 +1584,30 @@ image load_image(char *filename, int w, int h, int c)
 	}
 }
 
-image raw_to_image(uint8_t * buffer,int w, int h, int c){
+// 20映射为0， 40映射为1（255）
+float temp_min = 20.0;
+float temp_max = 40.0;
+image raw_to_image(uint16_t * buffer,int w, int h, int c){
 	image out = make_image(w,h,c);
 	int index = 0;
+    uint16_t max=0;
+    uint32_t total = 0;;
 	for (int line = 0;line < h ; ++line) {
 		for (int col = 0; col < w; ++ col) {
-			
-			out.data[index] = buffer[index] / 255.0f;
+			unsigned char * p = (unsigned char * )&(buffer[index]);
+			//out.data[index] = buffer[index] / 255.0f;
+            uint16_t data = ((*p) * 256 + (*(p+1))) -  2731;
+            total += data;
+            out.data[index] = (data) / 10.0;
+            if (max < data) {
+                max = data;
+            }
+            //printf("temp: %f\n", out.data[index]);
 			index ++;
 		}
 	}
+    printf("max: %d, avr:%d\n",max, total/index);
+    normalize_image_constrain(out,temp_min,temp_max);
 	return out;
 }
 
@@ -1589,7 +1616,7 @@ image load_raw(char *filename){
 	#define RAW_H (32)
 	#define RAW_CHANNEL (1)
 	#define READ_CNT (RAW_W * RAW_H * RAW_CHANNEL)
-	uint8_t buffer[RAW_W*RAW_H*RAW_CHANNEL];
+	uint16_t buffer[RAW_W*RAW_H*RAW_CHANNEL];
 	FILE *file = fopen(filename, "rb");
 	if (!file) {
 		fprintf(stderr,"Can not open %s.Reason:%s\n",filename,strerror(errno));
@@ -1597,7 +1624,7 @@ image load_raw(char *filename){
 	}
 
 	size_t size = READ_CNT;
-	size = fread(buffer,1,READ_CNT,file);
+	size = fread(buffer,2,READ_CNT,file);
 	if (size != READ_CNT) {
 		fprintf(stderr,"Can not read %d bytes from %s,only %ld bytes read.Reason:%s\n",READ_CNT,filename,size,strerror(errno));
 		return make_image(10, 10, 1);
@@ -1607,6 +1634,9 @@ image load_raw(char *filename){
 	return raw_to_image(buffer,RAW_W,RAW_H,RAW_CHANNEL);
 }
 
+void improve_image_for_raw(image im){
+    //normalize_image_constrain(im,20.0,40.0);
+}
 
 image load_image_color(char *filename, int w, int h)
 {

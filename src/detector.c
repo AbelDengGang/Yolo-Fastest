@@ -1674,6 +1674,7 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
         }
         //image im;
         //image sized = load_image_resize(input, net.w, net.h, net.c, &im);
+        int is_raw = is_raw_file(filename);
         image im = load_image(input, 0, 0, net.c);
         image sized;
         if(letter_box) sized = letterbox_image(im, net.w, net.h);
@@ -1701,6 +1702,12 @@ void test_detector_batch(char *datacfg, char *cfgfile, char *weightfile, char *l
         //network_predict_image(&net, im); letterbox = 1;
         printf("%s: Predicted in %lf milli-seconds.\n", input, ((double)get_time_point() - time) / 1000);
         //printf("%s: Predicted in %f seconds.\n", input, (what_time_is_it_now()-time));
+
+        //--------------------------------------------------------------------------------------------//
+        // 在这以后，可以对img做操作而不会影响推理结果
+        if (is_raw) {
+            improve_image_for_raw(im);
+        }
 
         int nboxes = 0;
         detection *dets = get_network_boxes(&net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letter_box);
@@ -2193,9 +2200,11 @@ void draw_object(char *datacfg, char *cfgfile, char *weightfile, char *filename,
 }
 #endif // defined(OPENCV) && defined(GPU)
 
-
+extern float temp_max,temp_min;
 void run_detector(int argc, char **argv)
 {
+    temp_min = find_float_arg(argc,argv,"-temp_min",20.0); // 在读取raw数据时候温度范围。在这个范围内的温度映射为0--1.0
+    temp_max = find_float_arg(argc,argv,"-temp_max",40.0);
     int dont_show = find_arg(argc, argv, "-dont_show");
     int show_delay = find_int_arg(argc, argv, "-show_delay",0);
     int benchmark = find_arg(argc, argv, "-benchmark");
