@@ -333,6 +333,14 @@ extern "C" mat_cv * image_to_mat_ptr(image img)
 }
 
 
+extern "C" mat_cv * load_raw_mat_cv(char *filename){
+    mat_cv * src = NULL;
+	image img = load_raw(filename);
+	src = image_to_mat_ptr(img);
+    free_image(img);
+    return src;
+}
+
 // ----------------------------------------
 
 extern "C" image mat_to_image(cv::Mat mat)
